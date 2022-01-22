@@ -172,10 +172,20 @@ def miner():
     
     final_df = df_append.drop_duplicates(subset=["action"])
     
-    final_df.to_csv("C:/Users/Dell/Desktop/DataDump/data1.csv")
+    final_df.to_csv("C:/Users/Dell/Desktop/DataDump/current_df.csv")
     
-    notification_df=final_df[(final_df["posting_time"]>= today_date)] 
+    notification_df=final_df[(final_df["posting_time"]>= today_date)]
+    notification_df.to_csv("C:/Users/Dell/Desktop/DataDump/notification_df.csv")
     
+    from sqlalchemy import create_engine
+    import mysql.connector as mysql 
+    from mysql.connector import MySQLConnection 
+    import pymysql
+    
+    conn= create_engine("mysql+pymysql://root:infomarches$212$@localhost:3306/govcontract")
+    
+    final_df.to_sql(name='currentcontracts',con=conn,if_exists='replace',index=False)
+    notification_df.to_sql(name='notifications',con=conn,if_exists='replace',index=False)
     tnp2 = time() - t0
     tnp2=tnp2/60
     
@@ -191,11 +201,11 @@ def miner():
     
     df= [['Today Date', today_date],['Total', len(final_df)],['Time Taken(mins)', tnp2],['New Notification #', len(notification_df)]]
     df=pd.DataFrame(df, columns= ['Variables', 'Results'])
-    recipients=['akrafssi1@babson.edu']
+    recipients=['krafssi.achraf21@gmail.com','amanagrawal7898@gmail.com']
     emaillist=[elem.strip().split(',') for elem in recipients]
     msg= MIMEMultipart()
     msg['Subject']="Update on Miner"
-    msg['From']='akrafssi1@babson.edu'
+    msg['From']='info-marches212@gmail.com'
     
     html= """
     <html>
@@ -212,8 +222,14 @@ def miner():
     part1= MIMEText(html,'html')
     msg.attach(part1)
     
+    user='infomarches212@gmail.com'
+    password='infomarches$'
     server=smtplib.SMTP('smtp.gmail.com',587)
-    server.sendmail('krafssi.achraf21@gmail.com', emaillist , msg.as_string())
+    server.connect('smtp.gmail.com',587)
+    server.starttls()
+    server.ehlo()
+    server.login(user,password)
+    server.sendmail(user, emaillist , msg.as_string())
     server.quit()
     print('')
     print('')
